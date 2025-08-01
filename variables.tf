@@ -23,10 +23,12 @@ variable "allowed_cidr_blocks" {
 
 variable "db_name" {
   type = string
+  sensitive   = true
 }
 
 variable "db_username" {
   type = string
+  sensitive   = true
 }
 
 variable "db_password" {
