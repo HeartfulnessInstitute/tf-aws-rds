@@ -48,11 +48,6 @@ variable "instance_class" {
   default = "db.t3.micro"
 }
 
-variable "publicly_accessible" {
-  type    = bool
-  default = false
-}
-
 variable "skip_final_snapshot" {
   type    = bool
   default = true
