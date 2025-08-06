@@ -53,45 +53,5 @@ resource "aws_db_instance" "mysql" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
-/* resource "aws_kms_key" "rds_key" {
-  description             = "KMS key for encrypting RDS and Secrets Manager secrets"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Id      = "key-default-1",
-    Statement: [
-      {
-        Sid       = "Enable IAM User Permissions",
-        Effect    = "Allow",
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        },
-        Action    = "kms:*",
-        Resource  = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_kms_alias" "rds_key_alias" {
-  name          = "alias/hfncare-rds-key"
-  target_key_id = aws_kms_key.rds_key.key_id
-}*/
 
 
-resource "aws_secretsmanager_secret" "db_secret" {
-  name = "hfn/rds/db_credentials"
-  kms_key_id  = "arn:aws:kms:ap-south-1:502390415551:key/7a13d2a9-02d8-42e1-b310-ffeaa286f995"
-}
-
-resource "aws_secretsmanager_secret_version" "db_secret_version" {
-  secret_id     = aws_secretsmanager_secret.db_secret.id
-  secret_string = jsonencode({
-    db_username = var.db_username
-    db_password = var.db_password
-  })
-}

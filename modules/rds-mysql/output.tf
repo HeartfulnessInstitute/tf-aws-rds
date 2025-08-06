@@ -8,6 +8,6 @@ output "rds_sg_id" {
   value       = aws_security_group.rds_sg.id
 }
 
-/*output "kms_key_arn" {
-  value = aws_kms_key.rds_key.arn
-}*/
+output "db_secret_arn" {
+  value = aws_secretsmanager_secret.db_secret.arn
+}
