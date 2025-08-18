@@ -63,3 +63,7 @@ variable "multi_az" {
   default = false
 }
 
+variable "existing_rds_identifier" {
+  description = "The identifier of the existing RDS instance"
+  type        = string
+}
