@@ -1,4 +1,4 @@
-resource "aws_security_group" "rds_sg" {
+/*resource "aws_security_group" "rds_sg" {
   name        = "${var.project_name}-rds-sg"
   description = "Allow MySQL access"
   vpc_id      = var.vpc_id
@@ -51,6 +51,22 @@ resource "aws_db_instance" "mysql" {
   tags = {
     Name = "${var.project_name}-rds"
   }
+}*/
+
+data "aws_security_group" "rds_sg" {
+  filter {
+    name   = "group-name"
+    values = ["${var.project_name}-rdsmysql-sg"] # existing SG name
+  }
+  vpc_id = var.vpc_id
+}
+
+data "aws_db_subnet_group" "default" {
+  name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
+}
+
+data "aws_db_instance" "existing" {
+  db_instance_identifier = var.existing_rds_identifier
 }
 
 
