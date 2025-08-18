@@ -10,4 +10,4 @@ db_name = "carerds"
 skip_final_snapshot  = true
 backup_retention_period = 7
 multi_az             = false
-
+existing_rds_identifier = "hfn-project-mysql-db"
