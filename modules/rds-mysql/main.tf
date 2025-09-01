@@ -1,5 +1,9 @@
-/*resource "aws_security_group" "rds_sg" {
-  name        = "${var.project_name}-rds-sg"
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_security_group" "rds_sg" {
+  name        = "${var.project_name}-rds-mysql-sg"
   description = "Allow MySQL access"
   vpc_id      = var.vpc_id
 
@@ -18,7 +22,7 @@
   }
 
   tags = {
-    Name = "${var.project_name}-rds-sg"
+    Name = "${var.project_name}-rds-mysql-sg"
   }
 }
 
@@ -31,6 +35,9 @@ resource "aws_db_subnet_group" "default" {
   }
 }
 
+# data "aws_db_subnet_group" "default" {
+#   name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
+# }
 
 resource "aws_db_instance" "mysql" {
   identifier             = "${var.project_name}-db"
@@ -51,23 +58,23 @@ resource "aws_db_instance" "mysql" {
   tags = {
     Name = "${var.project_name}-rds"
   }
-}*/
-
-data "aws_security_group" "rds_sg" {
-  filter {
-    name   = "group-name"
-    values = ["${var.project_name}-rdsmysql-sg"] # existing SG name
-  }
-  vpc_id = var.vpc_id
 }
 
-data "aws_db_subnet_group" "default" {
-  name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
-}
+# data "aws_security_group" "rds_sg" {
+#   filter {
+#     name   = "group-name"
+#     values = ["${var.project_name}-rdsmysql-sg"] # existing SG name
+#   }
+#   vpc_id = var.vpc_id
+# }
 
-data "aws_db_instance" "existing" {
-  db_instance_identifier = var.existing_rds_identifier
-}
+# data "aws_db_subnet_group" "default" {
+#   name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
+# }
+
+# data "aws_db_instance" "existing" {
+#   db_instance_identifier = var.existing_rds_identifier
+# }
 
 
 
