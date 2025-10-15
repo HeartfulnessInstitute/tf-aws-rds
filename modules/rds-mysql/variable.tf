@@ -53,7 +53,6 @@ variable "db_allocated_storage" {
 variable "db_max_allocated_storage" {
   description = "Max allocated storage (GB) for autoscaling"
   type        = number
-  default     = 100
 }
 
 variable "private_subnet_ids" {
@@ -93,7 +92,6 @@ variable "multi_az" {
 variable "backup_retention_days" {
   description = "Backup retention days"
   type        = number
-  default     = 7
 }
 
 variable "deletion_protection" {
