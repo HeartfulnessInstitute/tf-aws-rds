@@ -11,3 +11,4 @@ skip_final_snapshot  = true
 backup_retention_period = 7
 multi_az             = false
 existing_rds_identifier = "hfn-project-rds-mysql-db"
+db_allocated_storage = "20"
