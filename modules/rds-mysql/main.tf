@@ -1,80 +1,83 @@
-provider "aws" {
-  region = "ap-south-1"
+locals {
+  merged_tags = merge({ Service = "rds" }, var.tags)
+  subnet_group_name = length(aws_db_subnet_group.this) > 0 ? aws_db_subnet_group.this[0].name : coalesce(var.db_subnet_group_name, "${var.db_identifier}-subnets")
 }
 
-resource "aws_security_group" "rds_sg" {
-  name        = "${var.project_name}-rds-mysql-sg"
-  description = "Allow MySQL access"
+# Security group for RDS
+resource "aws_security_group" "this" {
+  name        = "${var.db_identifier}-sg"
+  description = "Security group for RDS ${var.db_identifier}"
   vpc_id      = var.vpc_id
-
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = var.allowed_cidr_blocks
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project_name}-rds-mysql-sg"
-  }
+  tags        = merge(local.merged_tags, { Name = "${var.db_identifier}-sg" })
 }
 
-resource "aws_db_subnet_group" "default" {
-  name       = "${var.project_name}-subnet-group"
-  subnet_ids = var.subnet_ids
-
-  tags = {
-    Name = "${var.project_name}-subnet-group"
-  }
+# optional ingress rules from CIDR blocks
+resource "aws_vpc_security_group_ingress_rule" "mysql_cidrs" {
+  count             = length(var.allowed_cidr_blocks)
+  security_group_id = aws_security_group.this.id
+  cidr_ipv4         = var.allowed_cidr_blocks[count.index]
+  from_port         = 3306
+  to_port           = 3306
+  ip_protocol       = "tcp"
+  description       = "MySQL access from allowed CIDR"
 }
 
-# data "aws_db_subnet_group" "default" {
-#   name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
-# }
+# Create DB subnet group only when requested and subnets provided
+resource "aws_db_subnet_group" "this" {
+  count      = var.create_db_subnet_group && length(var.private_subnet_ids) > 0 ? 1 : 0
+  name       = coalesce(var.db_subnet_group_name, "${var.db_identifier}-subnets")
+  subnet_ids = var.private_subnet_ids
+  tags       = merge(local.merged_tags, { Name = coalesce(var.db_subnet_group_name, "${var.db_identifier}-subnets") })
+}
 
-resource "aws_db_instance" "mysql" {
-  identifier             = "${var.project_name}-db"
-  allocated_storage      = var.allocated_storage
-  storage_type           = var.storage_type
-  engine                 = "mysql"
-  engine_version         = var.engine_version
-  instance_class         = var.instance_class
+# Parameter group (optional)
+resource "aws_db_parameter_group" "this" {
+  name   = "${var.db_identifier}-pg"
+  family = "mysql8.0"
+  tags   = local.merged_tags
+}
+
+# RDS instance
+resource "aws_db_instance" "this" {
+  identifier             = var.db_identifier
+  engine                 = var.db_engine
+  engine_version         = var.db_engine_version
+
+  instance_class         = var.db_instance_class
   username               = var.db_username
   password               = var.db_password
-  port                   = 3306
-  db_subnet_group_name   = aws_db_subnet_group.default.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  skip_final_snapshot    = var.skip_final_snapshot
-  backup_retention_period = var.backup_retention_period
+  db_name                = var.db_name
+
+  allocated_storage      = var.db_allocated_storage
+  max_allocated_storage  = var.db_max_allocated_storage
+
+  storage_encrypted      = true
+  publicly_accessible    = false
   multi_az               = var.multi_az
 
-  tags = {
-    Name = "${var.project_name}-rds"
+  vpc_security_group_ids = [aws_security_group.this.id]
+
+  # safely reference subnet group name: if created above use that, otherwise use provided name
+  db_subnet_group_name   = local.subnet_group_name
+
+  parameter_group_name   = aws_db_parameter_group.this.name
+
+  backup_retention_period = var.backup_retention_days
+  backup_window           = "19:30-20:00"
+  maintenance_window      = "sun:20:30-sun:21:30"
+  auto_minor_version_upgrade = true
+
+  deletion_protection    = var.deletion_protection
+  skip_final_snapshot    = true
+  apply_immediately      = var.apply_immediately
+
+  enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
+
+  tags = local.merged_tags
+
+  lifecycle {
+    prevent_destroy = false
+    # ignore password changes in TF lifecycle if you rotate externally (optional)
+    ignore_changes  = [password]
   }
 }
-
-# data "aws_security_group" "rds_sg" {
-#   filter {
-#     name   = "group-name"
-#     values = ["${var.project_name}-rdsmysql-sg"] # existing SG name
-#   }
-#   vpc_id = var.vpc_id
-# }
-
-# data "aws_db_subnet_group" "default" {
-#   name = "${var.project_name}-rds-subnet-group" # existing DB subnet group name
-# }
-
-# data "aws_db_instance" "existing" {
-#   db_instance_identifier = var.existing_rds_identifier
-# }
-
-
-
