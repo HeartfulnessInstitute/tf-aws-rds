@@ -12,3 +12,5 @@ backup_retention_period = 7
 multi_az             = false
 existing_rds_identifier = "hfn-project-rds-mysql-db"
 db_allocated_storage = "20"
+db_max_allocated_storage = "100"
+backup_retention_days = "7"
