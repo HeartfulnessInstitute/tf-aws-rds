@@ -48,7 +48,6 @@ variable "db_name" {
 variable "db_allocated_storage" {
   description = "Allocated storage (GB)"
   type        = number
-  default     = 20
 }
 
 variable "db_max_allocated_storage" {
