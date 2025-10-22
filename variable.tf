@@ -1,35 +1,51 @@
 variable "name" {
-  description = "Name prefix for the RDS resources"
+  description = "Name/identifier of the DB instance"
+  type        = string
+}
+
+variable "name_prefix" {
+  description = "Prefix for resource naming"
   type        = string
 }
 
 variable "engine" {
-  description = "Database engine (e.g., postgres, mysql, mariadb)"
+  description = "Database engine (e.g. postgres, mysql)"
   type        = string
 }
 
 variable "engine_version" {
-  description = "Version of the database engine"
+  description = "Database engine version"
   type        = string
 }
 
 variable "instance_class" {
-  description = "RDS instance class (e.g., db.t3.micro, db.t3.medium)"
+  description = "Instance type (e.g. db.t3.micro)"
   type        = string
 }
 
 variable "allocated_storage" {
-  description = "The allocated storage in gigabytes"
+  description = "Allocated storage in GB"
   type        = number
 }
 
 variable "storage_type" {
-  description = "Storage type (gp2, gp3, io1, etc.)"
+  description = "Storage type (gp2, gp3, io1)"
   type        = string
 }
 
+variable "username" {
+  description = "DB admin username"
+  type        = string
+}
+
+variable "password" {
+  description = "DB admin password"
+  type        = string
+  sensitive   = true
+}
+
 variable "multi_az" {
-  description = "Enable Multi-AZ deployment for high availability"
+  description = "Whether to enable multi-AZ deployment"
   type        = bool
 }
 
@@ -39,48 +55,46 @@ variable "publicly_accessible" {
 }
 
 variable "vpc_id" {
-  description = "VPC ID where the RDS instance will be deployed"
+  description = "VPC ID for the DB security group"
   type        = string
-  default     = ""
+}
+
+variable "db_port" {
+  description = "DB port"
+  type        = number
 }
 
 variable "db_subnet_ids" {
-  description = "List or map of DB subnet IDs (some VPC modules output an object)"
+  description = "Subnets where the DB instance should reside"
   type        = any
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs to associate with the RDS instance"
+variable "db_allowed_sg_ids" {
+  description = "List of SG IDs allowed to access the DB"
   type        = list(string)
   default     = []
 }
 
-variable "username" {
-  description = "Master username for the RDS instance"
-  type        = string
-}
-
-variable "password" {
-  description = "Master password for the RDS instance (keep it secret)"
-  type        = string
-  sensitive   = true
+variable "db_allowed_cidrs" {
+  description = "List of CIDRs allowed to access the DB"
+  type        = list(string)
+  default     = []
 }
 
 variable "parameter_group_name" {
-  description = "Custom DB parameter group name (optional)"
+  description = "Optional DB parameter group name"
   type        = string
   default     = ""
 }
 
 variable "subnet_group_name" {
-  description = "Optional custom name for the DB subnet group"
+  description = "Optional custom name for DB subnet group"
   type        = string
   default     = ""
 }
 
 variable "tags" {
-  description = "Tags to assign to resources"
+  description = "Common tags for all resources"
   type        = map(string)
   default     = {}
 }
-
