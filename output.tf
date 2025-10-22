@@ -1,30 +1,19 @@
 output "db_instance_id" {
-  description = "RDS instance identifier (id)"
+  description = "RDS instance ID"
   value       = aws_db_instance.this.id
 }
 
-output "db_instance_arn" {
-  description = "RDS instance ARN"
-  value       = aws_db_instance.this.arn
-}
-
-output "endpoint" {
-  description = "RDS endpoint address"
+output "db_endpoint" {
+  description = "RDS endpoint"
   value       = aws_db_instance.this.endpoint
 }
 
-output "address" {
-  description = "Connection address"
-  value       = aws_db_instance.this.address
+output "db_security_group_id" {
+  description = "Security group ID used by the RDS instance"
+  value       = aws_security_group.db_sg.id
 }
 
-output "port" {
-  description = "RDS port"
-  value       = aws_db_instance.this.port
-}
-
-output "subnet_group_name" {
+output "db_subnet_group_name" {
   description = "DB subnet group name"
   value       = aws_db_subnet_group.this.name
 }
-
