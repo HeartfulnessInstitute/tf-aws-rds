@@ -41,3 +41,28 @@ resource "aws_db_instance" "this" {
   }
 }
 
+# 2) DB security group (allow access from your app SG or CIDR)
+resource "aws_security_group" "db_sg" {
+  name        = "${var.name_prefix}-db-sg"
+  description = "Allow DB access"
+  vpc_id      = module.vpc.vpc_id
+
+  # example allowing app security group or CIDR (adjust as needed)
+  ingress {
+    description      = "Postgres from app"
+    from_port        = 5432
+    to_port          = 5432
+    protocol         = "tcp"
+    # replace with your app SG id or trusted CIDR
+    cidr_blocks      = var.db_allowed_cidrs
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, { Name = "${var.name_prefix}-db-sg" })
+}
