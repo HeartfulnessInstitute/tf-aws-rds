@@ -9,14 +9,14 @@ locals {
 ##############################
 # Subnet Group
 ##############################
-resource "aws_db_subnet_group" "this" {
-  name       = var.subnet_group_name != "" ? var.subnet_group_name : "${var.name}-db-subnet-group"
-  subnet_ids = local.db_subnet_ids
+#resource "aws_db_subnet_group" "this" {
+ # name       = var.subnet_group_name != "" ? var.subnet_group_name : "${var.name}-db-subnet-group"
+  #subnet_ids = local.db_subnet_ids
 
-  tags = merge({
-    Name = "${var.name}-db-subnet-group"
-  }, var.tags)
-}
+  #tags = merge({
+   # Name = "${var.name}-db-subnet-group"
+  #}, var.tags)
+#}
 
 ##############################
 # DB Security Group
