@@ -1,11 +1,25 @@
+output "db_instance_id" {
+  description = "RDS instance id"
+  value       = aws_db_instance.this.id
+}
+
 output "db_endpoint" {
-  value = aws_db_instance.main.endpoint
+  description = "RDS endpoint address"
+  value       = aws_db_instance.this.address
 }
 
 output "db_port" {
-  value = aws_db_instance.main.port
+  description = "RDS port"
+  value       = aws_db_instance.this.port
 }
 
-output "db_name" {
-  value = aws_db_instance.main.db_name
+output "db_subnet_group_name" {
+  description = "DB subnet group name (if created)"
+  value       = var.create_db_subnet_group ? aws_db_subnet_group.this[0].name : var.db_subnet_group_name
+  nullable    = true
+}
+
+output "rds_security_group_id" {
+  description = "Security group ID created for RDS"
+  value       = aws_security_group.rds.id
 }
