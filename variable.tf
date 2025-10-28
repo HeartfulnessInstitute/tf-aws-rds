@@ -29,18 +29,16 @@ variable "password" {
 }
 
 ########################################
-# OPTIONAL VARIABLES
+ VARIABLES
 ########################################
 variable "engine" {
   description = "Database engine (e.g., postgres, mysql)"
   type        = string
-  default     = "postgres"
 }
 
 variable "engine_version" {
   description = "Database engine version"
   type        = string
-  default     = "15.4"
 }
 
 variable "instance_class" {
@@ -148,4 +146,9 @@ variable "allowed_cidr_blocks" {
 variable "db_port" {
   description = "Database port"
   type        = number
+}
+variable "tags" {
+  description = "A map of tags to assign to RDS resources"
+  type        = map(string)
+  default     = {}
 }
