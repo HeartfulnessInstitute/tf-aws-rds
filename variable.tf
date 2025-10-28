@@ -126,3 +126,8 @@ variable "subnet_tags" {
   type        = map(string)
   default     = {}
 }
+variable "vpc_security_group_ids" {
+  description = "Optional list of existing security group ids. If omitted, module will create one."
+  type        = list(string)
+  default     = []
+}
