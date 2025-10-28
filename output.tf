@@ -16,7 +16,6 @@ output "db_port" {
 output "db_subnet_group_name" {
   description = "DB subnet group name (if created)"
   value       = var.create_db_subnet_group ? aws_db_subnet_group.this[0].name : var.db_subnet_group_name
-  nullable    = true
 }
 
 output "rds_security_group_id" {
