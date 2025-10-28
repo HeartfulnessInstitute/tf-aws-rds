@@ -1,18 +1,23 @@
-########################################
-# LOCALS: Normalize subnet IDs
-########################################
 locals {
-  # Normalize input subnet IDs — supports list, map, or single string
-  db_subnet_ids_input = (
-    can(tolist(var.db_subnet_ids)) ? tolist(var.db_subnet_ids) :
-    can(values(var.db_subnet_ids)) ? values(var.db_subnet_ids) :
-    var.db_subnet_ids == "" || var.db_subnet_ids == null ? [] :
-    [var.db_subnet_ids]
-  )
+  # try to coerce different shapes into lists, then flatten into a single list
+  db_subnet_ids_normalized = flatten([
+    # if var.db_subnet_ids is already a list -> tolist() returns that list, else error -> try() returns []
+    try(tolist(var.db_subnet_ids), []),
 
-  # Final subnet list — use provided subnets (no creation when using existing VPC)
-  db_subnet_ids_final = local.db_subnet_ids_input
+    # if var.db_subnet_ids is a map/object -> values(...) returns list of values
+    try(values(var.db_subnet_ids), []),
+
+    # if var.db_subnet_ids is a single non-empty string -> wrap in list, else []
+    var.db_subnet_ids == null || var.db_subnet_ids == "" ? [] : [var.db_subnet_ids]
+  ])
+
+  # final cleaned list: convert all elements to string, remove empty/null, remove duplicates
+  db_subnet_ids = distinct([
+    for s in local.db_subnet_ids_normalized : tostring(s)
+    if s != null && tostring(s) != ""
+  ])
 }
+
 
 ########################################
 # SECURITY GROUP
