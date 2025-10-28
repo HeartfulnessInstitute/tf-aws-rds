@@ -68,7 +68,8 @@ password = var.password
 multi_az = var.multi_az
 publicly_accessible = var.publicly_accessible
 skip_final_snapshot = var.skip_final_snapshot
-final_snapshot_identifier = var.final_snapshot_identifier
+final_snapshot_identifier = var.skip_final_snapshot ? null : (var.final_snapshot_identifier != "" ? var.final_snapshot_identifier : null)
+
 apply_immediately = var.apply_immediately
 backup_retention_period = var.backup_retention_period
 deletion_protection = var.deletion_protection
