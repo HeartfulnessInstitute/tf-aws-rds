@@ -98,3 +98,31 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# --------------------------
+# Subnet & Networking Variables
+# --------------------------
+
+variable "create_subnets" {
+  description = "Whether to create new DB subnets if subnet_ids not provided"
+  type        = bool
+  default     = true
+}
+
+variable "subnet_cidrs" {
+  description = "List of CIDR blocks to create subnets if create_subnets = true"
+  type        = list(string)
+  default     = []
+}
+
+variable "availability_zones" {
+  description = "List of availability zones to assign to created subnets"
+  type        = list(string)
+  default     = []
+}
+
+variable "subnet_tags" {
+  description = "Map of tags to apply to created subnets"
+  type        = map(string)
+  default     = {}
+}
