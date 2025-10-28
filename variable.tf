@@ -1,132 +1,151 @@
-variable "identifier" {
-  description = "The name of the RDS instance"
+########################################
+# REQUIRED VARIABLES
+########################################
+variable "name" {
+  description = "Name identifier for the RDS instance"
   type        = string
 }
 
-variable "engine" {
-  description = "The database engine to use"
+variable "vpc_id" {
+  description = "VPC ID where RDS will be deployed"
   type        = string
 }
 
-variable "engine_version" {
-  description = "The engine version to use"
-  type        = string
-}
-
-variable "instance_class" {
-  description = "The instance type of the RDS instance"
-  type        = string
-}
-
-variable "allocated_storage" {
-  description = "The allocated storage in gigabytes"
-  type        = number
-}
-
-variable "max_allocated_storage" {
-  description = "The upper limit for storage autoscaling"
-  type        = number
-}
-
-variable "database_name" {
-  description = "The name of the database to create"
-  type        = string
+variable "db_subnet_ids" {
+  description = "List of existing subnet IDs for RDS (can be list, map, or string)"
+  type        = any
 }
 
 variable "username" {
-  description = "Username for the master DB user"
-  type        = string
-}
-
-variable "password" {
-  description = "Password for the master DB user"
+  description = "Master username for the database"
   type        = string
   sensitive   = true
 }
 
-variable "vpc_id" {
-  description = "VPC ID where the RDS instance will be created"
+variable "password" {
+  description = "Master password for the database"
+  type        = string
+  sensitive   = true
+}
+
+########################################
+# OPTIONAL VARIABLES
+########################################
+variable "engine" {
+  description = "Database engine (e.g., postgres, mysql)"
+  type        = string
+  default     = "postgres"
+}
+
+variable "engine_version" {
+  description = "Database engine version"
+  type        = string
+  default     = "15.4"
+}
+
+variable "instance_class" {
+  description = "RDS instance class"
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs for the DB subnet group"
-  type        = list(string)
-}
-
-variable "allowed_security_group_ids" {
-  description = "List of security group IDs allowed to access the RDS instance"
-  type        = list(string)
-  default     = []
-}
-
-variable "allowed_cidr_blocks" {
-  description = "List of CIDR blocks allowed to access the RDS instance"
-  type        = list(string)
-  default     = []
-}
-
-variable "port" {
-  description = "The port on which the DB accepts connections"
+variable "allocated_storage" {
+  description = "Allocated storage in GB"
   type        = number
 }
 
+variable "storage_type" {
+  description = "Storage type (gp2, gp3, io1)"
+  type        = string
+}
+
+variable "storage_encrypted" {
+  description = "Enable storage encryption"
+  type        = bool
+  default     = true
+}
+
 variable "multi_az" {
-  description = "Specifies if the RDS instance is multi-AZ"
+  description = "Enable Multi-AZ deployment"
   type        = bool
   default     = false
 }
 
 variable "publicly_accessible" {
-  description = "Bool to control if instance is publicly accessible"
+  description = "Make RDS publicly accessible"
   type        = bool
   default     = false
 }
 
 variable "backup_retention_period" {
-  description = "The days to retain backups for"
+  description = "Backup retention period in days"
   type        = number
   default     = 7
 }
 
 variable "backup_window" {
-  description = "The daily time range during which backups are created"
+  description = "Preferred backup window"
   type        = string
   default     = "03:00-04:00"
 }
 
 variable "maintenance_window" {
-  description = "The window to perform maintenance in"
+  description = "Preferred maintenance window"
   type        = string
-  default     = "Mon:04:00-Mon:05:00"
+  default     = "sun:04:00-sun:05:00"
 }
 
 variable "skip_final_snapshot" {
-  description = "Determines whether a final DB snapshot is created before deletion"
+  description = "Skip final snapshot on deletion"
+  type        = bool
+  default     = false
+}
+
+variable "apply_immediately" {
+  description = "Apply changes immediately"
   type        = bool
   default     = false
 }
 
 variable "deletion_protection" {
-  description = "If the DB instance should have deletion protection enabled"
+  description = "Enable deletion protection"
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "storage_encrypted" {
-  description = "Specifies whether the DB instance is encrypted"
-  type        = bool
-  default     = true
-}
-
-variable "kms_key_id" {
-  description = "The ARN for the KMS encryption key"
+variable "parameter_group_name" {
+  description = "Custom parameter group name"
   type        = string
-  default     = null
+  default     = ""
 }
 
-variable "tags" {
-  description = "A map of tags to add to all resources"
-  type        = map(string)
-  default     = {}
+variable "subnet_group_name" {
+  description = "Custom subnet group name"
+  type        = string
+  default     = ""
+}
+
+########################################
+# SECURITY GROUP VARIABLES
+########################################
+variable "create_security_group" {
+  description = "Create a security group for RDS"
+  type        = bool
+  default     = true
+}
+
+variable "security_group_ids" {
+  description = "Additional security group IDs to attach"
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_cidr_blocks" {
+  description = "CIDR blocks allowed to access the database"
+  type        = list(string)
+  default     = []
+}
+
+variable "db_port" {
+  description = "Database port"
+  type        = number
 }
