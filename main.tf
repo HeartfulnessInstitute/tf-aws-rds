@@ -13,14 +13,6 @@ locals {
     if s != null && tostring(s) != ""
   ])
 }
-##############################################################################
-# Final resolved subnet ids: prefer provided ones, else use created subnets
-##############################################################################
-locals {
-  db_subnet_ids_final = length(local.db_subnet_ids) > 0 ? local.db_subnet_ids : aws_subnet.created[*].id
-}
-
-
 
 ########################################
 # Security Group 
