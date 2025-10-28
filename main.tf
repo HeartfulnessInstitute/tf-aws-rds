@@ -19,17 +19,6 @@ resource_name_prefix = trim(var.name_prefix != "" ? "${var.name_prefix}-" : "", 
 }
 
 ##########################
-# Validation - need at least 2 private subnets when creating DB subnet group
-##########################
-resource "null_resource" "validate_subnets" {
-  count = (var.create_db_subnet_group && length(local.private_subnet_ids_list) < 2) ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "echo 'Error: create_db_subnet_group=true requires at least 2 private_subnet_ids' && exit 1"
-  }
-}
-
-##########################
 # Create DB Subnet Group (if requested)
 ##########################
 resource "aws_db_subnet_group" "this" {
