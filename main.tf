@@ -12,7 +12,7 @@ locals {
 }
 
 ############################################
-# CREATE SUBNETS (if none provided)
+# CREATE SUBNETS 
 ############################################
 resource "aws_subnet" "created" {
   count = length(local.db_subnet_ids_input) == 0 && var.create_subnets ? length(var.subnet_cidrs) : 0
