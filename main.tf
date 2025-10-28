@@ -75,8 +75,6 @@ backup_retention_period = var.backup_retention_period
 deletion_protection = var.deletion_protection
 performance_insights_enabled = var.performance_insights_enabled
 performance_insights_kms_key_id = var.performance_insights_kms_key_id
-parameter_group_name = var.create_parameter_group ? aws_db_parameter_group.this[0].name : (var.parameter_group_name != "" ? var.parameter_group_name : null)
-
 
 tags = merge({ Name = var.identifier }, var.tags)
 }
