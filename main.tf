@@ -24,6 +24,7 @@ data "aws_vpc" "existing" {
 
 data "aws_subnets" "existing" {
   count = var.use_existing_vpc && var.auto_discover_subnets ? 1 : 0
+}
   
   filter {
     name   = "vpc-id"
