@@ -9,9 +9,14 @@ output "db_endpoint" {
 }
 
 output "db_security_group_id" {
-  description = "Security group ID used by the RDS instance"
-  value       = aws_security_group.db_sg.id
+  description = "DB security group id created or provided (first found)"
+  value = (
+    length(aws_security_group.default) > 0 ? aws_security_group.default[0].id :
+    (length(var.security_group_ids) > 0 ? var.security_group_ids[0] :
+      (length(var.vpc_security_group_ids) > 0 ? var.vpc_security_group_ids[0] : null))
+  )
 }
+
 
 output "db_subnet_group_name" {
   description = "DB subnet group name"
