@@ -65,7 +65,6 @@ db_subnet_group_name = aws_db_subnet_group.this.name
 vpc_security_group_ids = length(var.vpc_security_group_ids) > 0 ? var.vpc_security_group_ids : (aws_security_group.default[*].id)
 username = var.username
 password = var.password
-name = var.db_name
 multi_az = var.multi_az
 publicly_accessible = var.publicly_accessible
 skip_final_snapshot = var.skip_final_snapshot
