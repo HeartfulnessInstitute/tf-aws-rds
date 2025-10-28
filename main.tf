@@ -79,4 +79,5 @@ parameter_group_name = var.create_parameter_group ? aws_db_parameter_group.this[
 
 
 tags = merge({ Name = var.identifier }, var.tags)
+}
 
