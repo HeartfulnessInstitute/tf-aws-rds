@@ -1,17 +1,14 @@
+########################################
+# Normalize db_subnet_ids into list(string)
+########################################
 locals {
-  # try to coerce different shapes into lists, then flatten into a single list
+  # gather possible list forms and flatten into one list
   db_subnet_ids_normalized = flatten([
-    # if var.db_subnet_ids is already a list -> tolist() returns that list, else error -> try() returns []
     try(tolist(var.db_subnet_ids), []),
-
-    # if var.db_subnet_ids is a map/object -> values(...) returns list of values
     try(values(var.db_subnet_ids), []),
-
-    # if var.db_subnet_ids is a single non-empty string -> wrap in list, else []
     var.db_subnet_ids == null || var.db_subnet_ids == "" ? [] : [var.db_subnet_ids]
   ])
 
-  # final cleaned list: convert all elements to string, remove empty/null, remove duplicates
   db_subnet_ids = distinct([
     for s in local.db_subnet_ids_normalized : tostring(s)
     if s != null && tostring(s) != ""
@@ -19,8 +16,9 @@ locals {
 }
 
 
+
 ########################################
-# SECURITY GROUP
+# Security Group 
 ########################################
 resource "aws_security_group" "db_sg" {
   count = var.create_security_group ? 1 : 0
@@ -62,16 +60,16 @@ resource "aws_security_group_rule" "db_egress" {
   description       = "Allow all outbound traffic"
 }
 
+# Combine provided security groups with created SG (if any)
 locals {
-  # Combine provided security groups with created one
   final_security_group_ids = concat(
     var.security_group_ids,
-    var.create_security_group ? [aws_security_group.db_sg[0].id] : []
+    var.create_security_group ? (length(aws_security_group.db_sg) > 0 ? [aws_security_group.db_sg[0].id] : []) : []
   )
 }
 
 ########################################
-# DB SUBNET GROUP
+# DB Subnet Group (uses db_subnet_ids_final)
 ########################################
 resource "aws_db_subnet_group" "this" {
   name       = var.subnet_group_name != "" ? var.subnet_group_name : "${var.name}-db-subnet-group"
@@ -90,7 +88,7 @@ resource "aws_db_subnet_group" "this" {
 }
 
 ########################################
-# RDS INSTANCE
+# RDS Instance
 ########################################
 resource "aws_db_instance" "this" {
   identifier             = var.name
@@ -100,33 +98,29 @@ resource "aws_db_instance" "this" {
   allocated_storage      = var.allocated_storage
   storage_type           = var.storage_type
   storage_encrypted      = var.storage_encrypted
-  
-  # Credentials
+
   username = var.username
   password = var.password
 
-  # Network
   db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = local.final_security_group_ids
   publicly_accessible    = var.publicly_accessible
 
-  # High Availability
   multi_az = var.multi_az
 
-  # Backup
   backup_retention_period = var.backup_retention_period
-  backup_window          = var.backup_window
-  maintenance_window     = var.maintenance_window
+  backup_window           = var.backup_window
+  maintenance_window      = var.maintenance_window
 
-  # Snapshots
   skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.name}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
-  # Other
-  apply_immediately       = var.apply_immediately
-  deletion_protection     = var.deletion_protection
-  parameter_group_name    = var.parameter_group_name != "" ? var.parameter_group_name : null
-  
+  apply_immediately    = var.apply_immediately
+  deletion_protection  = var.deletion_protection
+  parameter_group_name = var.parameter_group_name != "" ? var.parameter_group_name : null
+
+  port = var.db_port
+
   tags = var.tags
 
   depends_on = [aws_db_subnet_group.this]
