@@ -29,7 +29,7 @@ variable "password" {
 }
 
 ########################################
- VARIABLES
+# VARIABLES
 ########################################
 variable "engine" {
   description = "Database engine (e.g., postgres, mysql)"
