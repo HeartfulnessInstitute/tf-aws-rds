@@ -1,96 +1,128 @@
-resource "aws_db_subnet_group" "this" {
-  name       = "${var.identifier}-subnet-group"
-  subnet_ids = var.subnet_ids
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.identifier}-subnet-group"
-    }
+########################################
+# LOCALS: Normalize subnet IDs
+########################################
+locals {
+  # Normalize input subnet IDs — supports list, map, or single string
+  db_subnet_ids_input = (
+    can(tolist(var.db_subnet_ids)) ? tolist(var.db_subnet_ids) :
+    can(values(var.db_subnet_ids)) ? values(var.db_subnet_ids) :
+    var.db_subnet_ids == "" || var.db_subnet_ids == null ? [] :
+    [var.db_subnet_ids]
   )
+
+  # Final subnet list — use provided subnets (no creation when using existing VPC)
+  db_subnet_ids_final = local.db_subnet_ids_input
 }
 
-resource "aws_security_group" "this" {
-  name        = "${var.identifier}-rds-sg"
-  description = "Security group for ${var.identifier} RDS instance"
+########################################
+# SECURITY GROUP
+########################################
+resource "aws_security_group" "db_sg" {
+  count = var.create_security_group ? 1 : 0
+
+  name_prefix = "${var.name}-db-sg-"
+  description = "Security group for ${var.name} RDS instance"
   vpc_id      = var.vpc_id
 
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.identifier}-rds-sg"
-    }
-  )
+  tags = merge({
+    Name = "${var.name}-db-sg"
+  }, var.tags)
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-resource "aws_security_group_rule" "ingress_cidr" {
-  count             = length(var.allowed_cidr_blocks) > 0 ? 1 : 0
+resource "aws_security_group_rule" "db_ingress" {
+  count = var.create_security_group ? length(var.allowed_cidr_blocks) : 0
+
   type              = "ingress"
-  from_port         = var.port
-  to_port           = var.port
+  from_port         = var.db_port
+  to_port           = var.db_port
   protocol          = "tcp"
   cidr_blocks       = var.allowed_cidr_blocks
-  security_group_id = aws_security_group.this.id
-  description       = "Allow inbound traffic from specified CIDR blocks"
+  security_group_id = aws_security_group.db_sg[0].id
+  description       = "Allow database access from specified CIDR blocks"
 }
 
-resource "aws_security_group_rule" "ingress_sg" {
-  count                    = length(var.allowed_security_group_ids)
-  type                     = "ingress"
-  from_port                = var.port
-  to_port                  = var.port
-  protocol                 = "tcp"
-  source_security_group_id = var.allowed_security_group_ids[count.index]
-  security_group_id        = aws_security_group.this.id
-  description              = "Allow inbound traffic from security group"
-}
+resource "aws_security_group_rule" "db_egress" {
+  count = var.create_security_group ? 1 : 0
 
-resource "aws_security_group_rule" "egress" {
   type              = "egress"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.this.id
+  security_group_id = aws_security_group.db_sg[0].id
   description       = "Allow all outbound traffic"
 }
 
+locals {
+  # Combine provided security groups with created one
+  final_security_group_ids = concat(
+    var.security_group_ids,
+    var.create_security_group ? [aws_security_group.db_sg[0].id] : []
+  )
+}
+
+########################################
+# DB SUBNET GROUP
+########################################
+resource "aws_db_subnet_group" "this" {
+  name       = var.subnet_group_name != "" ? var.subnet_group_name : "${var.name}-db-subnet-group"
+  subnet_ids = local.db_subnet_ids_final
+
+  tags = merge({
+    Name = "${var.name}-db-subnet-group"
+  }, var.tags)
+
+  lifecycle {
+    precondition {
+      condition     = length(local.db_subnet_ids_final) >= 2
+      error_message = "At least 2 subnets are required for RDS (across AZs)."
+    }
+  }
+}
+
+########################################
+# RDS INSTANCE
+########################################
 resource "aws_db_instance" "this" {
-  identifier     = var.identifier
-  engine         = var.engine
-  engine_version = var.engine_version
-  instance_class = var.instance_class
-
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
-  storage_type          = "gp3"
-  storage_encrypted     = var.storage_encrypted
-  kms_key_id            = var.kms_key_id
-
-  db_name  = var.database_name
+  identifier             = var.name
+  engine                 = var.engine
+  engine_version         = var.engine_version
+  instance_class         = var.instance_class
+  allocated_storage      = var.allocated_storage
+  storage_type           = var.storage_type
+  storage_encrypted      = var.storage_encrypted
+  
+  # Credentials
   username = var.username
   password = var.password
-  port     = var.port
 
+  # Network
   db_subnet_group_name   = aws_db_subnet_group.this.name
-  vpc_security_group_ids = [aws_security_group.this.id]
+  vpc_security_group_ids = local.final_security_group_ids
   publicly_accessible    = var.publicly_accessible
-  multi_az               = var.multi_az
 
+  # High Availability
+  multi_az = var.multi_az
+
+  # Backup
   backup_retention_period = var.backup_retention_period
-  backup_window           = var.backup_window
-  maintenance_window      = var.maintenance_window
+  backup_window          = var.backup_window
+  maintenance_window     = var.maintenance_window
 
+  # Snapshots
   skip_final_snapshot       = var.skip_final_snapshot
-  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.identifier}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
-  deletion_protection       = var.deletion_protection
+  final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.name}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
-  enabled_cloudwatch_logs_exports = var.engine == "postgres" ? ["postgresql", "upgrade"] : var.engine == "mysql" ? ["error", "general", "slowquery"] : []
+  # Other
+  apply_immediately       = var.apply_immediately
+  deletion_protection     = var.deletion_protection
+  parameter_group_name    = var.parameter_group_name != "" ? var.parameter_group_name : null
+  
+  tags = var.tags
 
-  tags = merge(
-    var.tags,
-    {
-      Name = var.identifier
-    }
-  )
+  depends_on = [aws_db_subnet_group.this]
 }
