@@ -13,6 +13,7 @@ locals {
 
   # final vpc id must be provided either directly or implied by calling module
   vpc_id_final = var.vpc_id != "" ? var.vpc_id : null
+
 resource_name_prefix = trim(var.name_prefix != "" ? "${var.name_prefix}-" : "", "-")
 
 }
