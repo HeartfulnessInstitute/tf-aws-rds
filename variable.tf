@@ -1,30 +1,78 @@
-variable "project_name" {
-  description = "Name of the project"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment (dev, staging, prod)"
-  type        = string
-}
-
+############################################
+# VPC Configuration
+############################################
 variable "vpc_id" {
-  description = "ID of the existing VPC"
+  description = "VPC ID where RDS will be deployed"
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs for RDS subnet group"
-  type        = list(string)
+variable "use_existing_vpc" {
+  description = "Whether to use an existing VPC (enables data source lookup)"
+  type        = bool
+  default     = true
 }
 
-variable "database_name" {
-  description = "Name of the database to create"
+############################################
+# Subnet Configuration
+############################################
+variable "db_subnet_ids" {
+  description = "Existing subnet IDs for RDS (list, map, or string). If empty, subnets will be created."
+  type        = any
+  default     = []
+}
+
+variable "auto_discover_subnets" {
+  description = "Automatically discover subnets in the VPC (used when db_subnet_ids is empty)"
+  type        = bool
+  default     = false
+}
+
+variable "subnet_filter_tags" {
+  description = "Tags to filter subnets when auto-discovering (e.g., {Tier = 'private'})"
+  type        = map(string)
+  default     = null
+}
+
+variable "create_subnets" {
+  description = "Create new subnets if db_subnet_ids is empty"
+  type        = bool
+  default     = false
+}
+
+variable "subnet_cidrs" {
+  description = "CIDR blocks for new subnets (only used if create_subnets = true)"
+  type        = list(string)
+  default     = []
+}
+
+variable "availability_zones" {
+  description = "Availability zones for new subnets"
+  type        = list(string)
+  default     = []
+}
+
+variable "subnet_tags" {
+  description = "Additional tags for created subnets"
+  type        = map(string)
+  default     = {}
+}
+
+variable "subnet_group_name" {
+  description = "Name for DB subnet group (defaults to {name}-db-subnet-group)"
+  type        = string
+  default     = ""
+}
+
+############################################
+# RDS Configuration
+############################################
+variable "name" {
+  description = "Name/identifier for the RDS instance"
   type        = string
 }
 
 variable "engine" {
-  description = "Database engine (mysql, postgres, mariadb, oracle-ee, sqlserver-ex)"
+  description = "Database engine (postgres, mysql, mariadb, etc.)"
   type        = string
 }
 
@@ -34,17 +82,12 @@ variable "engine_version" {
 }
 
 variable "instance_class" {
-  description = "RDS instance class"
+  description = "RDS instance type (e.g., db.t3.micro)"
   type        = string
 }
 
 variable "allocated_storage" {
-  description = "Allocated storage in GB"
-  type        = number
-}
-
-variable "max_allocated_storage" {
-  description = "Maximum allocated storage for autoscaling in GB"
+  description = "Storage size in GB"
   type        = number
 }
 
@@ -53,62 +96,49 @@ variable "storage_type" {
   type        = string
 }
 
-variable "storage_encrypted" {
-  description = "Enable storage encryption"
-  type        = bool
-}
-
-variable "kms_key_id" {
-  description = "KMS key ID for encryption (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "master_username" {
-  description = "Master username for the database"
-  type        = string
-}
-
-variable "master_password" {
-  description = "Master password for the database (use AWS Secrets Manager in production)"
+variable "username" {
+  description = "Master username"
   type        = string
   sensitive   = true
 }
 
-variable "port" {
-  description = "Database port"
-  type        = number
+variable "password" {
+  description = "Master password"
+  type        = string
+  sensitive   = true
 }
 
 variable "multi_az" {
   description = "Enable Multi-AZ deployment"
   type        = bool
+  default     = false
 }
 
 variable "publicly_accessible" {
-  description = "Make database publicly accessible"
+  description = "Whether the DB is publicly accessible"
   type        = bool
+  default     = false
 }
 
-variable "backup_retention_period" {
-  description = "Backup retention period in days"
-  type        = number
+variable "security_group_ids" {
+  description = "VPC security group IDs"
+  type        = list(string)
 }
 
-variable "backup_window" {
-  description = "Preferred backup window"
+variable "parameter_group_name" {
+  description = "DB parameter group name"
   type        = string
-  default     = "03:00-04:00"
-}
-
-variable "maintenance_window" {
-  description = "Preferred maintenance window"
-  type        = string
-  default     = "sun:04:00-sun:05:00"
+  default     = ""
 }
 
 variable "skip_final_snapshot" {
   description = "Skip final snapshot on deletion"
+  type        = bool
+  default     = true
+}
+
+variable "apply_immediately" {
+  description = "Apply changes immediately"
   type        = bool
   default     = false
 }
@@ -116,44 +146,14 @@ variable "skip_final_snapshot" {
 variable "deletion_protection" {
   description = "Enable deletion protection"
   type        = bool
+  default     = false
 }
 
-
-
-variable "auto_minor_version_upgrade" {
-  description = "Enable auto minor version upgrade"
-  type        = bool
-  default     = true
-}
-
-variable "allowed_cidr_blocks" {
-  description = "List of CIDR blocks allowed to access the database"
-  type        = list(string)
-  default     = []
-}
-
-variable "allowed_security_group_ids" {
-  description = "List of security group IDs allowed to access the database"
-  type        = list(string)
-  default     = []
-}
-
-variable "parameter_group_family" {
-  description = "Database parameter group family"
-  type        = string
-}
-
-variable "parameters" {
-  description = "Database parameters"
-  type = list(object({
-    name  = string
-    value = string
-  }))
-  default = []
-}
-
+############################################
+# Tags
+############################################
 variable "tags" {
-  description = "Additional tags for resources"
+  description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
 }
