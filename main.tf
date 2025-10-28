@@ -65,7 +65,10 @@ resource "aws_db_instance" "this" {
   db_subnet_group_name    = aws_db_subnet_group.this.name
   multi_az                = var.multi_az
   publicly_accessible     = var.publicly_accessible
-  vpc_security_group_ids  = var.security_group_ids
+vpc_security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids :
+  (length(var.vpc_security_group_ids) > 0 ? var.vpc_security_group_ids :
+    (length(aws_security_group.default) > 0 ? aws_security_group.default[*].id : []))
+
   skip_final_snapshot     = true
   apply_immediately       = false
   deletion_protection     = false
