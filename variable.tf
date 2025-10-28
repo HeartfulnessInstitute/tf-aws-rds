@@ -1,65 +1,129 @@
-########################################
-# REQUIRED VARIABLES
-########################################
+#############################
+# RDS BASE CONFIG
+#############################
 variable "name" {
-  description = "Name identifier for the RDS instance"
+  description = "Base name for RDS resources (used as identifier prefix)"
   type        = string
 }
 
+variable "tags" {
+  description = "Tags to apply to RDS resources"
+  type        = map(string)
+  default     = {}
+}
+
+#############################
+# NETWORKING
+#############################
 variable "vpc_id" {
   description = "VPC ID where RDS will be deployed"
   type        = string
 }
 
 variable "db_subnet_ids" {
-  description = "List of existing subnet IDs for RDS (can be list, map, or string)"
+  description = "Existing subnet IDs for DB subnet group. Accepts list, map/object, or single string."
   type        = any
+  default     = []
 }
 
-variable "username" {
-  description = "Master username for the database"
+variable "create_subnets" {
+  description = "If true and db_subnet_ids is empty, create new subnets using subnet_cidrs"
+  type        = bool
+  default     = false
+}
+
+variable "subnet_cidrs" {
+  description = "CIDR blocks for new subnets (used when create_subnets = true)"
+  type        = list(string)
+  default     = []
+}
+
+variable "availability_zones" {
+  description = "AZs for new subnets (optional). If empty, AWS auto-selects."
+  type        = list(string)
+  default     = []
+}
+
+variable "subnet_tags" {
+  description = "Tags for created subnets"
+  type        = map(string)
+  default     = {}
+}
+
+variable "subnet_group_name" {
+  description = "Optional name for DB subnet group"
   type        = string
-  sensitive   = true
+  default     = ""
 }
 
-variable "password" {
-  description = "Master password for the database"
-  type        = string
-  sensitive   = true
+#############################
+# SECURITY GROUP
+#############################
+variable "create_security_group" {
+  description = "Whether to create a new SG for RDS"
+  type        = bool
+  default     = true
 }
 
-########################################
-# VARIABLES
-########################################
+variable "allowed_cidr_blocks" {
+  description = "CIDRs allowed to connect to the DB"
+  type        = list(string)
+}
+
+variable "security_group_ids" {
+  description = "List of existing SG IDs to attach to RDS (merged with created SG if enabled)"
+  type        = list(string)
+  default     = []
+}
+
+#############################
+# DATABASE CONFIGURATION
+#############################
 variable "engine" {
-  description = "Database engine (e.g., postgres, mysql)"
+  description = "RDS engine type (mysql, postgres, etc.)"
   type        = string
 }
 
 variable "engine_version" {
-  description = "Database engine version"
+  description = "RDS engine version"
   type        = string
 }
 
 variable "instance_class" {
-  description = "RDS instance class"
+  description = "RDS instance class (e.g., db.t3.micro)"
   type        = string
 }
 
 variable "allocated_storage" {
-  description = "Allocated storage in GB"
+  description = "Allocated storage (GB)"
   type        = number
 }
 
 variable "storage_type" {
-  description = "Storage type (gp2, gp3, io1)"
+  description = "Storage type"
   type        = string
 }
 
 variable "storage_encrypted" {
   description = "Enable storage encryption"
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "username" {
+  description = "Master DB username"
+  type        = string
+}
+
+variable "password" {
+  description = "Master DB password"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_port" {
+  description = "Database port"
+  type        = number
 }
 
 variable "multi_az" {
@@ -69,13 +133,22 @@ variable "multi_az" {
 }
 
 variable "publicly_accessible" {
-  description = "Make RDS publicly accessible"
+  description = "Whether the DB is publicly accessible"
   type        = bool
   default     = false
 }
 
+#############################
+# BACKUP & MAINTENANCE
+#############################
+variable "parameter_group_name" {
+  description = "Optional DB parameter group name"
+  type        = string
+  default     = ""
+}
+
 variable "backup_retention_period" {
-  description = "Backup retention period in days"
+  description = "Number of days to retain backups"
   type        = number
   default     = 7
 }
@@ -89,66 +162,23 @@ variable "backup_window" {
 variable "maintenance_window" {
   description = "Preferred maintenance window"
   type        = string
-  default     = "sun:04:00-sun:05:00"
+  default     = "sun:05:00-sun:06:00"
 }
 
 variable "skip_final_snapshot" {
-  description = "Skip final snapshot on deletion"
+  description = "Skip final snapshot when destroying the DB"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "apply_immediately" {
-  description = "Apply changes immediately"
+  description = "Apply modifications immediately"
   type        = bool
   default     = false
 }
 
 variable "deletion_protection" {
-  description = "Enable deletion protection"
+  description = "Enable deletion protection for the DB"
   type        = bool
   default     = false
-}
-
-variable "parameter_group_name" {
-  description = "Custom parameter group name"
-  type        = string
-  default     = ""
-}
-
-variable "subnet_group_name" {
-  description = "Custom subnet group name"
-  type        = string
-  default     = ""
-}
-
-########################################
-# SECURITY GROUP VARIABLES
-########################################
-variable "create_security_group" {
-  description = "Create a security group for RDS"
-  type        = bool
-  default     = true
-}
-
-variable "security_group_ids" {
-  description = "Additional security group IDs to attach"
-  type        = list(string)
-  default     = []
-}
-
-variable "allowed_cidr_blocks" {
-  description = "CIDR blocks allowed to access the database"
-  type        = list(string)
-  default     = []
-}
-
-variable "db_port" {
-  description = "Database port"
-  type        = number
-}
-variable "tags" {
-  description = "A map of tags to assign to RDS resources"
-  type        = map(string)
-  default     = {}
 }
