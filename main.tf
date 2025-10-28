@@ -2,9 +2,22 @@
 # Normalize db_subnet_ids into list(string)
 ########################################
 locals {
-  db_subnet_ids_final = length(local.db_subnet_ids) > 0 ? local.db_subnet_ids : (
-    length(try(aws_subnet.created, [])) > 0 ? aws_subnet.created[*].id : []
-  )
+  db_subnet_ids_normalized = flatten([
+    try(tolist(var.db_subnet_ids), []),
+    try(values(var.db_subnet_ids), []),
+    var.db_subnet_ids == null || var.db_subnet_ids == "" ? [] : [var.db_subnet_ids]
+  ])
+
+  db_subnet_ids = distinct([
+    for s in local.db_subnet_ids_normalized : tostring(s)
+    if s != null && tostring(s) != ""
+  ])
+}
+##############################################################################
+# Final resolved subnet ids: prefer provided ones, else use created subnets
+##############################################################################
+locals {
+  db_subnet_ids_final = length(local.db_subnet_ids) > 0 ? local.db_subnet_ids : aws_subnet.created[*].id
 }
 
 
