@@ -62,6 +62,7 @@ variable "allowed_cidr_blocks" {
 variable "identifier" {
   description = "RDS instance identifier"
   type        = string
+  default     = ""
 }
 
 variable "engine" {
